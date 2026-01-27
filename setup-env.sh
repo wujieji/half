@@ -516,13 +516,24 @@ configure_zshrc() {
         cp ~/.zshrc ~/.zshrc.backup
     fi
 
-    # 更新插件列表
-    if grep -q "^plugins=(git)" ~/.zshrc; then
-        sed -i 's/^plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-z)/' ~/.zshrc
+    # 检查是否已经有我们的插件
+    if grep -q "zsh-autosuggestions" ~/.zshrc; then
+        log_info "插件配置已存在，跳过"
+        return 0
+    fi
+
+    # 更新插件列表 - 匹配多种格式
+    if grep -q "^plugins=" ~/.zshrc || grep -q "^plugins=(" ~/.zshrc; then
+        # 替换或添加插件
+        sed -i 's/^plugins=(.*)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-z)/' ~/.zshrc
+        sed -i 's/^plugins=.*/plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-z)/' ~/.zshrc
         log_info "已更新.zshrc插件配置"
     else
-        log_warn "无法自动更新.zshrc插件配置，请手动添加："
-        log_warn "plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-z)"
+        # 没有plugins行，添加到文件末尾
+        echo "" >> ~/.zshrc
+        echo "# 添加插件" >> ~/.zshrc
+        echo "plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-z)" >> ~/.zshrc
+        log_info "已添加插件配置到.zshrc"
     fi
 }
 
