@@ -417,6 +417,31 @@ install_fnm() {
 
     log_info "fnm安装成功: $(fnm --version)，正在安装Node.js LTS..."
 
+    # 将fnm配置添加到shell配置文件
+    if ! grep -q 'FNM_PATH' ~/.bashrc 2>/dev/null; then
+        cat >> ~/.bashrc << 'EOF'
+
+# fnm
+FNM_PATH="$HOME/.local/share/fnm"
+if [ -d "$FNM_PATH" ]; then
+  export PATH="$FNM_PATH:$PATH"
+  eval "$(fnm env)"
+fi
+EOF
+    fi
+
+    if ! grep -q 'FNM_PATH' ~/.zshrc 2>/dev/null; then
+        cat >> ~/.zshrc << 'EOF'
+
+# fnm
+FNM_PATH="$HOME/.local/share/fnm"
+if [ -d "$FNM_PATH" ]; then
+  export PATH="$FNM_PATH:$PATH"
+  eval "$(fnm env)"
+fi
+EOF
+    fi
+
     # 在当前shell中eval fnm环境
     eval "$(fnm env --shell bash)"
 
