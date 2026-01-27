@@ -468,20 +468,23 @@ install_fnm() {
 
     log_info "fnm安装成功，正在安装Node.js LTS..."
 
-    # 安装并使用最新的LTS Node.js版本
-    fnm install --lts
-    fnm use lts/*
-
-    # 设置PATH以便当前shell可以立即使用node/npm
-    export PATH="$HOME/.fnm:$PATH"
-
-    # 将fnm配置添加到shell配置文件
+    # 先将fnm配置添加到shell配置文件
     if ! grep -q 'fnm env' ~/.bashrc 2>/dev/null; then
         echo 'eval "$(fnm env --shell bash)"' >> ~/.bashrc
     fi
     if ! grep -q 'fnm env' ~/.zshrc 2>/dev/null; then
         echo 'eval "$(fnm env --shell zsh)"' >> ~/.zshrc
     fi
+
+    # 在当前shell中eval fnm环境
+    eval "$(fnm env --shell bash)"
+
+    # 安装并使用最新的LTS Node.js版本
+    fnm install --lts
+    fnm use lts/*
+
+    # 再次eval fnm环境以使node/npm可用
+    eval "$(fnm env --shell bash)"
 
     # 验证安装
     if command -v node &> /dev/null; then
