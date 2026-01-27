@@ -591,10 +591,10 @@ setup_tmux() {
         log_info "已备份现有tmux配置"
     fi
 
-    # 复制预设的tmux配置文件
-    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    if [ -f "$script_dir/configs/tmux.conf" ]; then
-        cp "$script_dir/configs/tmux.conf" "$HOME/.tmux.conf"
+    # 复制预设的tmux配置文件（使用当前工作目录）
+    local current_dir="$(pwd)"
+    if [ -f "$current_dir/configs/tmux.conf" ]; then
+        cp "$current_dir/configs/tmux.conf" "$HOME/.tmux.conf"
         log_info "tmux配置已安装"
         return 0
     else
@@ -692,14 +692,15 @@ setup_nvim_config() {
         log_info "已备份现有nvim配置"
     fi
 
-    # 复制当前目录的nvim配置
-    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    if [ ! -d "$script_dir/nvim" ]; then
-        log_error "nvim配置目录不存在: $script_dir/nvim"
+    # 复制当前目录的nvim配置（使用当前工作目录）
+    local current_dir="$(pwd)"
+    if [ ! -d "$current_dir/nvim" ]; then
+        log_error "nvim配置目录不存在: $current_dir/nvim"
+        log_warn "请确保在包含nvim配置目录的位置运行脚本"
         return 1
     fi
 
-    cp -r "$script_dir/nvim" "$HOME/.config/nvim"
+    cp -r "$current_dir/nvim" "$HOME/.config/nvim"
     log_info "nvim配置已复制"
 
     # 首次运行nvim以安装插件
