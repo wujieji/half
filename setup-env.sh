@@ -506,6 +506,19 @@ install_oh_my_zsh() {
     # 配置.zshrc
     configure_zshrc
 
+    # 切换默认shell为zsh
+    if [ "$SHELL" != "$(which zsh)" ]; then
+        log_info "正在将默认shell切换为zsh..."
+        if chsh -s "$(which zsh)"; then
+            log_info "默认shell已切换为zsh"
+            log_info "请运行以下命令或重新登录以应用: exec zsh"
+        else
+            log_warn "切换默认shell失败，请手动运行: chsh -s \$(which zsh)"
+        fi
+    else
+        log_info "默认shell已经是zsh"
+    fi
+
     log_info "oh-my-zsh配置完成"
     return 0
 }
