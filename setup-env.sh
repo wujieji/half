@@ -457,29 +457,39 @@ install_fnm() {
         return 1
     fi
 
-    # 加载fnm环境
+    # 直接加载fnm到PATH（不依赖fnm命令）
     export PATH="$HOME/.fnm:$PATH"
-    eval "$(fnm env --shell bash)"
 
-    # 安装最新的LTS Node.js版本
-    if command -v fnm &> /dev/null; then
-        log_info "fnm安装成功，正在安装Node.js LTS..."
-        fnm install --lts
-        fnm use lts/*
+    # 验证fnm是否可用
+    if ! command -v fnm &> /dev/null; then
+        log_error "fnm安装后验证失败"
+        return 1
+    fi
 
-        # 设置PATH
-        if ! grep -q 'fnm env' ~/.bashrc 2>/dev/null; then
-            echo 'eval "$(fnm env --shell bash)"' >> ~/.bashrc
-        fi
-        if ! grep -q 'fnm env' ~/.zshrc 2>/dev/null; then
-            echo 'eval "$(fnm env --shell zsh)"' >> ~/.zshrc
-        fi
+    log_info "fnm安装成功，正在安装Node.js LTS..."
 
+    # 安装并使用最新的LTS Node.js版本
+    fnm install --lts
+    fnm use lts/*
+
+    # 设置PATH以便当前shell可以立即使用node/npm
+    export PATH="$HOME/.fnm:$PATH"
+
+    # 将fnm配置添加到shell配置文件
+    if ! grep -q 'fnm env' ~/.bashrc 2>/dev/null; then
+        echo 'eval "$(fnm env --shell bash)"' >> ~/.bashrc
+    fi
+    if ! grep -q 'fnm env' ~/.zshrc 2>/dev/null; then
+        echo 'eval "$(fnm env --shell zsh)"' >> ~/.zshrc
+    fi
+
+    # 验证安装
+    if command -v node &> /dev/null; then
         log_info "Node.js安装成功: $(node --version)"
         log_info "npm安装成功: $(npm --version)"
         return 0
     else
-        log_error "fnm安装后验证失败"
+        log_warn "Node.js安装可能有问题，请运行: eval \"\$(fnm env --shell bash)\""
         return 1
     fi
 }
