@@ -499,6 +499,20 @@ install_fnm() {
 ################################################################################
 
 install_oh_my_zsh() {
+    local pkg_manager=$1
+
+    # 检查并安装zsh
+    if ! command -v zsh &> /dev/null; then
+        log_info "zsh未安装，正在安装zsh..."
+        if ! install_package $pkg_manager zsh; then
+            log_error "zsh安装失败"
+            return 1
+        fi
+        log_info "zsh安装成功"
+    else
+        log_info "zsh已安装: $(zsh --version)"
+    fi
+
     # 安装oh-my-zsh
     if [ ! -d "$HOME/.oh-my-zsh" ]; then
         log_info "正在安装oh-my-zsh..."
@@ -785,7 +799,7 @@ main() {
     # 安装oh-my-zsh
     log_info ""
     log_step "Step 4: 安装和配置oh-my-zsh"
-    run_install_step "oh-my-zsh" "install_oh_my_zsh"
+    run_install_step "oh-my-zsh" "install_oh_my_zsh" $pkg_manager
 
     # 安装tmux
     log_info ""
