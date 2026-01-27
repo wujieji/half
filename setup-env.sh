@@ -230,66 +230,7 @@ install_basic_tools() {
 install_python_tools() {
     if command -v python3 &> /dev/null; then
         log_info "Python3已安装: $(python3 --version)"
-
-        # 优先使用系统包管理器安装Python工具（避免externally-managed-environment错误）
-        local pkg_manager=$1
-        local packages_to_install=""
-
-        case $pkg_manager in
-            apt)
-                # Debian/Ubuntu使用系统包
-                local system_packages=(python3-black python3-flake8 python3-pylint)
-                for pkg in "${system_packages[@]}"; do
-                    if ! dpkg -l | grep -q "^ii  $pkg"; then
-                        packages_to_install="$packages_to_install $pkg"
-                    fi
-                done
-
-                if [ -n "$packages_to_install" ]; then
-                    log_info "使用系统包管理器安装Python工具: $packages_to_install"
-                    install_package $pkg_manager $packages_to_install || log_warn "系统包安装失败"
-                fi
-                ;;
-            dnf)
-                # CentOS/RHEL/Fedora
-                local system_packages=(python3-black python3-flake8 python3-pylint)
-                for pkg in "${system_packages[@]}"; do
-                    if ! rpm -q "$pkg" &> /dev/null; then
-                        packages_to_install="$packages_to_install $pkg"
-                    fi
-                done
-
-                if [ -n "$packages_to_install" ]; then
-                    log_info "使用系统包管理器安装Python工具: $packages_to_install"
-                    install_package $pkg_manager $packages_to_install || log_warn "系统包安装失败"
-                fi
-                ;;
-            pacman)
-                # Arch Linux
-                local system_packages=(python-black python-flake8 python-pylint)
-                for pkg in "${system_packages[@]}"; do
-                    if ! pacman -Q "$pkg" &> /dev/null; then
-                        packages_to_install="$packages_to_install $pkg"
-                    fi
-                done
-
-                if [ -n "$packages_to_install" ]; then
-                    log_info "使用系统包管理器安装Python工具: $packages_to_install"
-                    install_package $pkg_manager $packages_to_install || log_warn "系统包安装失败"
-                fi
-                ;;
-        esac
-
-        # 验证安装
-        local tools=("black" "flake8" "pylint")
-        for tool in "${tools[@]}"; do
-            if command -v $tool &> /dev/null || python3 -m "$tool" --version &> /dev/null; then
-                log_info "Python工具 $tool 可用"
-            else
-                log_warn "Python工具 $tool 未找到（可能包名不同或未安装）"
-            fi
-        done
-
+        log_info "跳过Python工具包安装（black、flake8、pylint）"
         return 0
     else
         log_error "Python3未安装"
