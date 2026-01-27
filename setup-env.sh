@@ -13,6 +13,9 @@ set +e  # 不在错误时退出，由各函数处理自己的错误
 # 全局变量和颜色定义
 ################################################################################
 
+# 获取脚本所在目录（无论从哪里运行都能找到配置文件）
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -453,20 +456,27 @@ install_fnm() {
 
     # 下载并安装fnm
     if ! curl -fsSL https://fnm.vercel.app/install | bash; then
-        log_error "fnm安装失败"
+        log_error "fnm安装下载失败"
         return 1
     fi
 
-    # 直接加载fnm到PATH（不依赖fnm命令）
+    # 检查fnm是否真的安装到了$HOME/.fnm
+    if [ ! -f "$HOME/.fnm/fnm" ]; then
+        log_error "fnm安装失败: $HOME/.fnm/fnm 不存在"
+        return 1
+    fi
+
+    # 直接加载fnm到PATH
     export PATH="$HOME/.fnm:$PATH"
 
     # 验证fnm是否可用
     if ! command -v fnm &> /dev/null; then
-        log_error "fnm安装后验证失败"
+        log_error "fnm安装后验证失败: fnm命令不可用"
+        log_error "PATH=$PATH"
         return 1
     fi
 
-    log_info "fnm安装成功，正在安装Node.js LTS..."
+    log_info "fnm安装成功: $(fnm --version)，正在安装Node.js LTS..."
 
     # 先将fnm配置添加到shell配置文件
     if ! grep -q 'fnm env' ~/.bashrc 2>/dev/null; then
@@ -480,8 +490,15 @@ install_fnm() {
     eval "$(fnm env --shell bash)"
 
     # 安装并使用最新的LTS Node.js版本
-    fnm install --lts
-    fnm use lts/*
+    if ! fnm install --lts; then
+        log_error "Node.js安装失败"
+        return 1
+    fi
+
+    if ! fnm use lts/*; then
+        log_error "Node.js版本切换失败"
+        return 1
+    fi
 
     # 再次eval fnm环境以使node/npm可用
     eval "$(fnm env --shell bash)"
@@ -492,7 +509,8 @@ install_fnm() {
         log_info "npm安装成功: $(npm --version)"
         return 0
     else
-        log_warn "Node.js安装可能有问题，请运行: eval \"\$(fnm env --shell bash)\""
+        log_error "Node.js安装验证失败: node命令不可用"
+        log_error "请运行: eval \"\$(fnm env --shell bash)\""
         return 1
     fi
 }
@@ -594,14 +612,13 @@ setup_tmux() {
         log_info "已备份现有tmux配置"
     fi
 
-    # 复制预设的tmux配置文件（使用当前工作目录）
-    local current_dir="$(pwd)"
-    if [ -f "$current_dir/configs/tmux.conf" ]; then
-        cp "$current_dir/configs/tmux.conf" "$HOME/.tmux.conf"
+    # 复制预设的tmux配置文件（使用脚本所在目录）
+    if [ -f "$SCRIPT_DIR/configs/tmux.conf" ]; then
+        cp "$SCRIPT_DIR/configs/tmux.conf" "$HOME/.tmux.conf"
         log_info "tmux配置已安装"
         return 0
     else
-        log_warn "预设的tmux配置文件不存在，创建默认配置"
+        log_warn "预设的tmux配置文件不存在 ($SCRIPT_DIR/configs/tmux.conf)，创建默认配置"
         create_default_tmux_config
         return 0
     fi
@@ -695,15 +712,15 @@ setup_nvim_config() {
         log_info "已备份现有nvim配置"
     fi
 
-    # 复制当前目录的nvim配置（使用当前工作目录）
-    local current_dir="$(pwd)"
-    if [ ! -d "$current_dir/nvim" ]; then
-        log_error "nvim配置目录不存在: $current_dir/nvim"
-        log_warn "请确保在包含nvim配置目录的位置运行脚本"
+    # 复制脚本所在目录的nvim配置
+    if [ ! -d "$SCRIPT_DIR/nvim" ]; then
+        log_error "nvim配置目录不存在: $SCRIPT_DIR/nvim"
+        log_warn "脚本所在目录: $SCRIPT_DIR"
+        log_warn "请确保nvim配置目录在脚本所在位置"
         return 1
     fi
 
-    cp -r "$current_dir/nvim" "$HOME/.config/nvim"
+    cp -r "$SCRIPT_DIR/nvim" "$HOME/.config/nvim"
     log_info "nvim配置已复制"
 
     # 首次运行nvim以安装插件
