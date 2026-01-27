@@ -401,31 +401,21 @@ install_fnm() {
         return 1
     fi
 
-    # 检查fnm是否真的安装到了$HOME/.fnm
-    if [ ! -f "$HOME/.fnm/fnm" ]; then
-        log_error "fnm安装失败: $HOME/.fnm/fnm 不存在"
+    # fnm安装到$HOME/.local/share/fnm，需要source环境
+    if [ -f "$HOME/.local/share/fnm/fnm" ]; then
+        export PATH="$HOME/.local/share/fnm:$PATH"
+    else
+        log_error "fnm安装失败: $HOME/.local/share/fnm/fnm 不存在"
         return 1
     fi
-
-    # 直接加载fnm到PATH
-    export PATH="$HOME/.fnm:$PATH"
 
     # 验证fnm是否可用
     if ! command -v fnm &> /dev/null; then
         log_error "fnm安装后验证失败: fnm命令不可用"
-        log_error "PATH=$PATH"
         return 1
     fi
 
     log_info "fnm安装成功: $(fnm --version)，正在安装Node.js LTS..."
-
-    # 先将fnm配置添加到shell配置文件
-    if ! grep -q 'fnm env' ~/.bashrc 2>/dev/null; then
-        echo 'eval "$(fnm env --shell bash)"' >> ~/.bashrc
-    fi
-    if ! grep -q 'fnm env' ~/.zshrc 2>/dev/null; then
-        echo 'eval "$(fnm env --shell zsh)"' >> ~/.zshrc
-    fi
 
     # 在当前shell中eval fnm环境
     eval "$(fnm env --shell bash)"
